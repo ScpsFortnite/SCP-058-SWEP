@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "guthscp/106/decal_corrosion"
+	"$translucent" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+	"$nolod" 1
+}
