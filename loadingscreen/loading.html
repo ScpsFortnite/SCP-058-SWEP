@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DarknessGames — Verbindung wird hergestellt</title>
+<style>
+  /* ============================================================
+     KONFIG — Farben hier zentral anpassbar
+     ============================================================ */
+  :root{
+    --bg:#0c0808;
+    --panel:rgba(20,14,14,0.72);
+    --border:rgba(200,90,90,0.20);
+    --accent:#d63a2e;          /* Breach-Rot */
+    --accent-dim:#7a1f18;
+    --warn:#ff6b4a;            /* Warn-Akzent (heller) */
+    --text:#e7d2d2;
+    --text-dim:#8a6f6f;
+    --mono:'Courier New',Consolas,monospace;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    position:relative;
+  }
+
+  /* ---- atmosphärischer Hintergrund ---- */
+  .bg-grad{
+    position:fixed;inset:0;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(214,58,46,0.10), transparent 60%),
+      radial-gradient(circle at 80% 90%, rgba(90,12,8,0.08), transparent 55%),
+      linear-gradient(180deg,#060404,#0d0909);
+    z-index:0;
+  }
+  /* Scanlines */
+  .scanlines{
+    position:fixed;inset:0;z-index:5;pointer-events:none;
+    background:repeating-linear-gradient(
+      0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 3px);
+    mix-blend-mode:multiply;animation:flick 6s infinite;
+  }
+  @keyframes flick{0%,97%,100%{opacity:1}98%{opacity:.7}}
+  /* roter Breach-Puls */
+  .alert-pulse{
+    position:fixed;inset:0;z-index:4;pointer-events:none;
+    box-shadow:inset 0 0 180px rgba(120,20,15,0.0);
+    animation:pulse 4.5s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:inset 0 0 180px rgba(120,20,15,0.05)}
+    50%{box-shadow:inset 0 0 220px rgba(120,20,15,0.16)}
+  }
+
+  /* ---- Layout ---- */
+  .wrap{
+    position:relative;z-index:10;
+    height:100%;display:grid;
+    grid-template-rows:auto 1fr auto;
+    padding:32px 48px;gap:18px;
+  }
+
+  /* Kopf */
+  header{display:flex;justify-content:space-between;align-items:flex-start}
+  .logo{display:flex;align-items:center;gap:16px}
+  .logo .sigil{
+    width:54px;height:54px;border:2px solid var(--accent);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+    font-weight:bold;color:var(--accent);
+    box-shadow:0 0 18px rgba(214,58,46,0.4);position:relative;
+  }
+  .logo .sigil::after{
+    content:'';position:absolute;inset:6px;border:1px solid var(--accent-dim);border-radius:50%;
+  }
+  .logo h1{font-size:20px;letter-spacing:3px;font-weight:700}
+  .logo .sub{font-size:11px;color:var(--text-dim);letter-spacing:2px;margin-top:2px}
+  .clearance{
+    text-align:right;font-size:11px;color:var(--text-dim);line-height:1.7;
+    border:1px solid var(--border);padding:8px 14px;background:var(--panel);
+  }
+  .clearance .red{color:var(--warn);font-weight:bold}
+
+  /* Mitte: zwei Spalten */
+  .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;min-height:0}
+  .panel{
+    background:var(--panel);border:1px solid var(--border);
+    padding:20px 22px;backdrop-filter:blur(2px);position:relative;overflow:hidden;
+  }
+  .panel::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,var(--accent),transparent);
+  }
+  .panel h2{
+    font-size:12px;letter-spacing:2px;color:var(--accent);
+    margin-bottom:14px;text-transform:uppercase;
+  }
+
+  /* Tipps / Regeln rotierend */
+  .tip{font-size:14px;line-height:1.7;color:var(--text);min-height:80px}
+  .tip .label{color:var(--warn);font-size:11px;letter-spacing:2px;display:block;margin-bottom:6px}
+
+  /* Team */
+  .team-list{display:flex;flex-direction:column;gap:9px;overflow-y:auto;max-height:100%}
+  .team-list::-webkit-scrollbar{width:5px}
+  .team-list::-webkit-scrollbar-thumb{background:var(--accent-dim)}
+  .member{display:flex;justify-content:space-between;align-items:center;
+    padding:7px 10px;border-left:2px solid var(--accent-dim);background:rgba(214,58,46,0.04)}
+  .member .name{font-size:13px}
+  .member .rank{font-size:10px;letter-spacing:1px;padding:2px 8px;border:1px solid var(--border);color:var(--text-dim)}
+  .member .rank.lead{color:var(--warn);border-color:var(--warn)}
+  .member .rank.admin{color:var(--accent);border-color:var(--accent)}
+
+  /* Fußzeile: Progress + Links */
+  footer{display:flex;flex-direction:column;gap:14px}
+  .status-line{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);letter-spacing:1px}
+  .status-line .file{color:var(--text);max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-shell{
+    height:14px;border:1px solid var(--accent-dim);background:rgba(0,0,0,0.4);
+    position:relative;overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;width:0%;
+    background:linear-gradient(90deg,var(--accent-dim),var(--accent));
+    box-shadow:0 0 14px rgba(214,58,46,0.6);transition:width .3s ease;
+  }
+  .bar-fill::after{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(45deg,rgba(0,0,0,0.18) 0 8px,transparent 8px 16px);
+    animation:stripes 1s linear infinite;
+  }
+  @keyframes stripes{from{background-position:0 0}to{background-position:32px 0}}
+
+  .footer-row{display:flex;justify-content:space-between;align-items:center}
+  .socials{display:flex;gap:12px}
+  .socials a{
+    color:var(--text-dim);text-decoration:none;font-size:12px;letter-spacing:1px;
+    border:1px solid var(--border);padding:7px 16px;transition:.2s;
+  }
+  .socials a:hover{color:var(--accent);border-color:var(--accent);box-shadow:0 0 12px rgba(214,58,46,0.3)}
+  .mute-btn{
+    background:none;border:1px solid var(--border);color:var(--text-dim);
+    font-family:var(--mono);cursor:pointer;padding:7px 14px;font-size:11px;letter-spacing:1px;transition:.2s;
+  }
+  .mute-btn:hover{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+  <div class="bg-grad"></div>
+  <div class="alert-pulse"></div>
+  <div class="scanlines"></div>
+
+  <div class="wrap">
+    <!-- ============ KOPF ============ -->
+    <header>
+      <div class="logo">
+        <div class="sigil">DG</div>
+        <div>
+          <h1>DARKNESSGAMES</h1>
+          <div class="sub">SECURE · CONTAIN · PROTECT</div>
+        </div>
+      </div>
+      <div class="clearance">
+        STANDORT-STATUS: <span class="red">CODE BLACK</span><br>
+        ZUGRIFFSEBENE: <span id="cl-map">—</span><br>
+        SITE-PERSONAL: <span id="cl-players">—</span>
+      </div>
+    </header>
+
+    <!-- ============ MITTE ============ -->
+    <div class="grid">
+      <div class="panel">
+        <h2>// Lagebericht</h2>
+        <div class="tip" id="tip">
+          <span class="label">PROTOKOLL</span>
+          Verbindung zur Foundation-Datenbank wird aufgebaut…
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>// Diensthabendes Personal</h2>
+        <div class="team-list" id="team"></div>
+      </div>
+    </div>
+
+    <!-- ============ FUSS ============ -->
+    <footer>
+      <div class="panel" style="padding:16px 22px">
+        <div class="status-line">
+          <span id="status">INITIALISIERE DOWNLOAD…</span>
+          <span class="file" id="file"></span>
+        </div>
+        <div class="bar-shell" style="margin:10px 0 6px">
+          <div class="bar-fill" id="bar"></div>
+        </div>
+        <div class="status-line">
+          <span id="percent">0%</span>
+          <span id="count"></span>
+        </div>
+      </div>
+
+      <div class="footer-row">
+        <div class="socials">
+          <a href="https://discord.gg/DEIN_INVITE" target="_blank">DISCORD</a>
+          <a href="https://DEINE-WEBSITE.de" target="_blank">FORUM</a>
+          <a href="https://steamcommunity.com/groups/DEINE_GRUPPE" target="_blank">STEAM</a>
+        </div>
+        <button class="mute-btn" id="mute" onclick="toggleAudio()">♪ TON: AUS</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Ambient-Loop. Ersetze die URL durch deine gehostete Datei (z.B. GitHub Pages). -->
+  <audio id="amb" loop preload="auto">
+    <source src="ambient.ogg" type="audio/ogg">
+  </audio>
+
+<script>
+/* ============================================================
+   1) DATEN — hier deine Inhalte pflegen
+   ============================================================ */
+const TIPS = [
+  {label:"REGEL 01", text:"Random Deathmatch (RDM) ist verboten. Greife nur mit gültigem RP-Grund an."},
+  {label:"REGEL 02", text:"Befolge stets die New-Life-Rule (NLR). Kehre nach dem Tod nicht zu deinem Sterbeort zurück."},
+  {label:"REGEL 03", text:"Metagaming und Powergaming führen zu sofortigen Sanktionen durch die Administration."},
+  {label:"TIPP", text:"Drücke F4, um dein Job-Menü zu öffnen und einer Fraktion beizutreten."},
+  {label:"TIPP", text:"D-Klasse-Personal: Kooperiere bei Tests — oder versuche die Flucht. Beides hat Konsequenzen."},
+  {label:"LORE", text:"Bei einem Containment-Breach ertönt der Alarm. MTF-Einheiten haben Vorrang bei der Rückführung."},
+];
+
+const TEAM = [
+  {name:"Scarlet",     rank:"OWNER",      cls:"lead"},
+  {name:"[Name]",      rank:"HEAD-ADMIN", cls:"lead"},
+  {name:"[Name]",      rank:"ADMIN",      cls:"admin"},
+  {name:"[Name]",      rank:"MODERATOR",  cls:""},
+  {name:"[Name]",      rank:"SUPPORTER",  cls:""},
+];
+
+/* ============================================================
+   2) RENDER
+   ============================================================ */
+const team = document.getElementById('team');
+TEAM.forEach(m=>{
+  const row=document.createElement('div');
+  row.className='member';
+  row.innerHTML=`<span class="name">${m.name}</span><span class="rank ${m.cls}">${m.rank}</span>`;
+  team.appendChild(row);
+});
+
+let ti=0;const tipEl=document.getElementById('tip');
+function rotateTip(){
+  const t=TIPS[ti%TIPS.length];ti++;
+  tipEl.style.opacity=0;
+  setTimeout(()=>{
+    tipEl.innerHTML=`<span class="label">${t.label}</span>${t.text}`;
+    tipEl.style.transition='opacity .4s';tipEl.style.opacity=1;
+  },300);
+}
+rotateTip();setInterval(rotateTip,5500);
+
+/* ============================================================
+   3) GMOD LOADING-CALLBACKS
+   GMod ruft diese Funktionen automatisch auf.
+   ============================================================ */
+let totalFiles=0, doneFiles=0;
+const bar=document.getElementById('bar');
+const pct=document.getElementById('percent');
+const cnt=document.getElementById('count');
+const fileEl=document.getElementById('file');
+const statusEl=document.getElementById('status');
+
+function update(){
+  const p = totalFiles>0 ? Math.min(100,Math.round(doneFiles/totalFiles*100)) : 0;
+  bar.style.width=p+'%';
+  pct.textContent=p+'%';
+  cnt.textContent=totalFiles>0 ? doneFiles+' / '+totalFiles+' DATEIEN' : '';
+}
+
+// Serverinfos beim Laden
+function GameDetails(server, url, map, max, steamid, gamemode){
+  document.getElementById('cl-map').textContent = map || '—';
+  // 'max' = Slots; aktuelle Spielerzahl liefert GMod hier nicht direkt
+  document.getElementById('cl-players').textContent = (max?('0 / '+max):'—');
+}
+// Gesamtzahl der zu ladenden Dateien
+function SetFilesTotal(total){ totalFiles=total; update(); }
+// verbleibende Dateien (zählt runter)
+function SetFilesNeeded(needed){
+  if(totalFiles>0){ doneFiles=totalFiles-needed; update(); }
+}
+// aktuell heruntergeladene Datei
+function DownloadingFile(fileName){
+  fileEl.textContent=fileName;
+  statusEl.textContent='LADE RESSOURCEN…';
+  doneFiles++; update();
+}
+function AllFilesComplete(){
+  statusEl.textContent='VERBINDUNG HERGESTELLT — BETRETE STANDORT';
+  bar.style.width='100%';pct.textContent='100%';
+}
+
+/* ============================================================
+   4) AMBIENT-AUDIO (Autoplay ist im GMod-Loader meist erlaubt;
+      Fallback-Button trotzdem vorhanden)
+   ============================================================ */
+const amb=document.getElementById('amb');
+const muteBtn=document.getElementById('mute');
+let playing=false;
+amb.volume=0.35;
+function tryPlay(){ amb.play().then(()=>{playing=true;muteBtn.textContent='♪ TON: AN';}).catch(()=>{}); }
+function toggleAudio(){
+  if(playing){amb.pause();playing=false;muteBtn.textContent='♪ TON: AUS';}
+  else tryPlay();
+}
+window.addEventListener('load',tryPlay);
+document.addEventListener('click',()=>{if(!playing)tryPlay();},{once:true});
+</script>
+</body>
+</html>
