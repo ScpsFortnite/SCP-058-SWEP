@@ -1,0 +1,7 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "darkness/ausweis/ausweis_med_l3"
+	"$model" 1
+	"$nocull" 0
+	"$surfaceprop" "plastic"
+}
